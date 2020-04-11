@@ -21,13 +21,15 @@ export class SongService {
     const songArr = Array.isArray(songs) ? songs.slice() : [songs]
     // 通过歌曲找到ids
     const ids = songArr.map(item => item.id).join(',')
-    return Observable.create(observer => {
-      // 找到urls
-      this.getSongUrl(ids).subscribe(urls => {
-        // 拼接+封装为observerable对象
-        return observer.next(this.generateSongList(songArr, urls))
-      })
-    })
+    // 新的方式
+    return this.getSongUrl(ids).pipe(map(urls => this.generateSongList(songArr, urls)))
+    // return Observable.create(observer => {
+    //   // 找到urls
+    //   this.getSongUrl(ids).subscribe(urls => {
+    //     // 拼接+封装为observerable对象
+    //     return observer.next(this.generateSongList(songArr, urls))
+    //   })
+    // })
   }
   // 跟song做拼接
   private generateSongList(songs: Song[], urls: SongUrl[]): Song[] {

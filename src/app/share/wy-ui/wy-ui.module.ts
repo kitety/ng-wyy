@@ -4,7 +4,6 @@ import { PlayCountPipe } from '../play-count.pipe';
 import { WyPlayerModule } from './wy-player/wy-player.module';
 
 
-
 @NgModule({
   declarations: [SingleSheetComponent, PlayCountPipe],
   imports: [
