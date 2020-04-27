@@ -3,7 +3,7 @@ import { fromEvent, Observable } from 'rxjs';
 import { filter, tap, pluck, map, distinct, distinctUntilChanged, takeUntil, merge } from 'rxjs/internal/operators';
 import { SliderEventObserverConfig } from './wy-slider-types';
 import { DOCUMENT } from '@angular/common';
-import { sliderEvent } from './wy-slider-helper';
+import { sliderEvent, getElementOffset } from './wy-slider-helper';
 
 @Component({
   selector: 'app-wy-slider',
@@ -17,11 +17,13 @@ import { sliderEvent } from './wy-slider-helper';
 })
 export class WySliderComponent implements OnInit {
 
+  @Input() wyVertical = false
+  @Input() wyMin = 0
+  @Input() wyMax = 100
   private dragStart$: Observable<number>
   private dragMove$: Observable<number>
   private dragEnd$: Observable<Event>
   private sliderDom: HTMLDivElement
-  @Input() wyVertical = false
   // 获取slider的el 
   @ViewChild('wySlider', { static: true }) private wySlider: ElementRef
   // 用ng的，不用原生的不利于服务端渲染
@@ -30,14 +32,14 @@ export class WySliderComponent implements OnInit {
   ngOnInit(): void {
     console.log('wySlider: ', this.wySlider);
     this.sliderDom = this.wySlider.nativeElement
-    this.createDarggingObserverables()
+    this.createDraggingObservables()
     this.subscribeDrag(['start'])
   }
   /**
    * pc mouseDown mouseMove mouseUp  MouseEvent pageX/Y
    * mobile touchDown touchMove touchEnd TouchEvent touches[0].pagX/Y 
    */
-  private createDarggingObserverables() {
+  private createDraggingObservables() {
     const orientField = this.wyVertical ? 'pageY' : 'pageX'
     // mouseEvent
     const mouse: SliderEventObserverConfig = {
@@ -90,6 +92,7 @@ export class WySliderComponent implements OnInit {
   private subscribeDrag(events: string[] = ['start', 'move', 'end']) {
     // 订阅s事件
     if (events.includes('start') && this.dragStart$) {
+      console.log(111111111111);
       this.dragStart$.subscribe(this.onDragStart.bind(this))
     }
     if (events.includes('move') && this.dragMove$) {
@@ -100,6 +103,7 @@ export class WySliderComponent implements OnInit {
     }
   }
   private onDragStart(value: number) {
+    console.log('value: ', value);
 
   }
   private onDragMove(value: number) {
@@ -107,8 +111,23 @@ export class WySliderComponent implements OnInit {
   }
 
   private findClosestValue(position: number): number {
-    console.log('position: ', position);
-    return position
+    // 获取滑块总长
+    const sliderLength = this.getSliderLength()
+    // 滑块的左端点 上端点的位置
+    const sliderStart = this.getSliderStartPosition()
+    // 滑块当前的位置/总长
+    const ratio = (position - sliderStart) / sliderLength
+    const ratioTrue = this.wyVertical ? 1 - ratio : ratio
 
+    return ratioTrue * (this.wyMax - this.wyMin) + this.wyMin
+  }
+
+  private getSliderStartPosition(): number {
+    const offset = getElementOffset(this.sliderDom)
+    return this.wyVertical ? offset.top : offset.left
+  }
+
+  private getSliderLength(): number {
+    return this.wyVertical ? this.sliderDom.clientHeight : this.sliderDom.clientWidth
   }
 }
